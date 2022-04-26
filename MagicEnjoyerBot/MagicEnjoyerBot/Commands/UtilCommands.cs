@@ -20,6 +20,14 @@ namespace MagicEnjoyerBot.Commands
 				CacheController.infoCache.Admins.Add(Context.User.Id);
 				await ReplyAsync("Admin'd");
 			}
+
+			[Command("grabchannelinfo")]
+			[Summary("grabs and prints info to console")]
+			[RequireOwner]
+			public async Task GrabChannelInfo()
+			{
+				Console.WriteLine(Context.Guild.Id + " " + Context.Channel.Id);
+			}
 		}
 	}
 }

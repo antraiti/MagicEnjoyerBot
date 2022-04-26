@@ -26,6 +26,13 @@ namespace MagicEnjoyerBot.Commands
 			{
 				await ReplyAsync(Context.User.Username);
 			}
+
+			[Command("forgor")]
+			[Summary("returns forgor")]
+			public async Task ReturnForgor()
+			{
+				await ReplyAsync("I forgor :skull:");
+			}
 		}
 
 		[Group("testing")]

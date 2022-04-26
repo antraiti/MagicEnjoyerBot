@@ -54,6 +54,7 @@ namespace MagicEnjoyerBot
 			CacheController.Initialize();
 
 			SpoilerController.Initialize(_client);
+			MemeController.Initialize(_client);
 		}
 
 		private async Task StartJobs()
