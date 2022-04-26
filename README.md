@@ -3,11 +3,12 @@ A discord bot under creation for use in the DMN Magic Discord.
 
 # Future features
 1. Card price lookups
-2. Channel birthday list and alerts
-3. Draft alerts for results
-4. Music bot
-5. BB decklist legality check
-6. Anthything else that comes up
+2. Random pod creator
+3. Channel birthday list and alerts
+4. Draft alerts for results
+5. Music bot
+6. BB decklist legality check
+7. Anthything else that comes up
 
 # Operational TODO's
 1. Versioning
