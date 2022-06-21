@@ -65,7 +65,7 @@ namespace MagicEnjoyerBot.Controllers
         //A dictionary of the spoil subscriber info (guild ids / the channel to output to in them)
         public Dictionary<ulong, ulong> SubsGuildXChannel = new Dictionary<ulong, ulong>();
         //A dictionary of the spoil url and last seen info (different spoil page urls / list of seen spoiler urls latest first)
-        public Dictionary<string, string> SpoilUrlsXSeen = new Dictionary<string,string>();
+        public Dictionary<string, List<string>> SpoilUrlsXSeen = new Dictionary<string,List<string>>();
         //interval for spoilers
         public int SpoilerIntervalSeconds = 300;
         //admin users

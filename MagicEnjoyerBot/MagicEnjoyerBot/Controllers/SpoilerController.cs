@@ -58,11 +58,11 @@ namespace MagicEnjoyerBot.Controllers
 
 		public static void AddSpoilerSetWithLatest(string setURL, string latestURL)
 		{
-			if(CacheController.infoCache.SpoilUrlsXSeen.ContainsKey(setURL))
-				CacheController.infoCache.SpoilUrlsXSeen[setURL] = latestURL;
-			else
-				CacheController.infoCache.SpoilUrlsXSeen.Add(setURL, latestURL);
-
+			if (!CacheController.infoCache.SpoilUrlsXSeen.ContainsKey(setURL))
+			{
+				CacheController.infoCache.SpoilUrlsXSeen.Add(setURL, new List<string>());
+			}
+			GetSpoilersUntil(setURL, latestURL);
 			CacheController.SaveList();
 		}
 
@@ -101,37 +101,44 @@ namespace MagicEnjoyerBot.Controllers
 			}
 		}
 
-		public static async Task GetUntil(string url, SocketCommandContext Context)
+		public static async Task GetSpoilersUntil(string setUrl, string latestUrl)
 		{
 			List<string> spoilers = new List<string>();
-			using (WebClient web1 = new WebClient())
+			try
 			{
-				Console.WriteLine("starting");
-				string data = web1.DownloadString("https://www.magicspoiler.com/mtg-set/streets-of-new-capenna/");
+				Console.WriteLine("Checking for latest spoilers: " + DateTime.Now.ToString());
+				using (WebClient web1 = new WebClient())
+				{
+					bool foundStart = false;
+					string data = web1.DownloadString(setUrl);
+					HtmlDocument htmlSnippet = new HtmlDocument();
+					htmlSnippet.LoadHtml(data);
+					HtmlNode latestBox = htmlSnippet.GetElementbyId("MS Spoilers M");
+					List<HtmlNode> latestImages = latestBox.Descendants("a").ToList();
+					string latestHref = latestImages.FirstOrDefault().Attributes["href"].Value;
 
-				Console.WriteLine("downloaded");
-				HtmlDocument htmlSnippet = new HtmlDocument();
-
-				Console.WriteLine("loading");
-				htmlSnippet.LoadHtml(data);
-
-				Console.WriteLine("searching");
-				HtmlNode latestBox = htmlSnippet.GetElementbyId("MS Spoilers M");
-
-				Console.WriteLine("found");
-				string currentHref = latestBox.Descendants("a").FirstOrDefault().Attributes["href"].Value;
-
-				while(currentHref != url)
-                {
-					//TODO: Fix this using logic from scrubby
-					string data2 = web1.DownloadString(currentHref);
-					htmlSnippet = new HtmlDocument();
-					htmlSnippet.LoadHtml(data2);
-					HtmlNode latestMain = htmlSnippet.GetElementbyId("main");
-					string latestImage = latestMain.Descendants("img").Where(x => x.Attributes["src"] != null).First().Attributes["src"].Value;
-
-					await Context.Channel.SendMessageAsync(latestImage);
+					foreach (HtmlNode node in latestBox.Descendants())
+					{
+						if (node.HasAttributes && node.Name == "a")
+						{
+							string currentHref = node.Attributes["href"].Value;
+							if (currentHref.Substring(0, 2) == "ht" && currentHref.Contains("mtg-spoiler"))
+							{
+								if (currentHref == latestUrl) foundStart = true;
+								else if (foundStart == true)
+								{
+									spoilers.Add(currentHref);
+								}
+							}
+						}
+					}
 				}
+
+				CacheController.infoCache.SpoilUrlsXSeen[setUrl] = spoilers;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("CAUGHT EXCEPTION: " + ex.ToString());
 			}
 		}
 
@@ -149,7 +156,7 @@ namespace MagicEnjoyerBot.Controllers
 			while (!_cancelRun)
 			{
 				Console.WriteLine("Checking for latest spoilers: " + DateTime.Now.ToString());
-				foreach(KeyValuePair<string, string> uxl in CacheController.infoCache.SpoilUrlsXSeen)
+				foreach(KeyValuePair<string, List<string>> uxl in CacheController.infoCache.SpoilUrlsXSeen)
                 {
 					await CheckAndSendLatestForURL(uxl.Key, uxl.Value);
                 }
@@ -158,14 +165,13 @@ namespace MagicEnjoyerBot.Controllers
 			_clearToRun = true;
 		}
 
-		private static async Task CheckAndSendLatestForURL(string url, string latest)
+		private static async Task CheckAndSendLatestForURL(string url, List<string> latest)
         {
 			try
 			{
 				Console.WriteLine("Checking for latest spoilers: " + DateTime.Now.ToString());
 				using (WebClient web1 = new WebClient())
 				{
-					List<string> usedUrls = new List<string>();
 					Console.WriteLine("Current latest: " + latest);
 					string data = web1.DownloadString(url);
 					Console.WriteLine("downloaded");
@@ -177,14 +183,11 @@ namespace MagicEnjoyerBot.Controllers
 					Console.WriteLine("found");
 					List<HtmlNode> latestImages = latestBox.Descendants("a").ToList();
 					string latestHref = latestImages.FirstOrDefault().Attributes["href"].Value;
-					if (latestHref != latest)
+					if (latestHref != latest.Last())
 					{
 						Console.WriteLine("!New Spoilers Found!");
 						//new stuff
-						string oldHref = latest;
-						Console.WriteLine(oldHref);
-						CacheController.infoCache.SpoilUrlsXSeen[url] = latestHref;
-						CacheController.SaveList();
+						Console.WriteLine(latest.Last());
 
 						//send images since latest
 						bool found = false;
@@ -196,34 +199,30 @@ namespace MagicEnjoyerBot.Controllers
 								if (currentHref.Substring(0, 2) == "ht" && currentHref.Contains("mtg-spoiler"))
 								{
 									Console.WriteLine("node reading " + currentHref);
-									if (currentHref != oldHref)
+									if (!latest.Contains(currentHref))
 									{
-										if (!usedUrls.Contains(currentHref))
-										{
-											usedUrls.Add(currentHref);
-											Console.WriteLine(currentHref);
-											string data2 = web1.DownloadString(currentHref);
-											Console.WriteLine("downloaded latest page");
-											htmlSnippet = new HtmlDocument();
-											htmlSnippet.LoadHtml(data2);
-											HtmlNode latestMain = htmlSnippet.GetElementbyId("main");
-											Console.WriteLine("main found");
-											string latestImage = latestMain.Descendants("img").Where(x => x.Attributes["src"] != null).First().Attributes["src"].Value;
-											Console.WriteLine("image found");
+										latest.Add(currentHref);
+										Console.WriteLine(currentHref);
+										string data2 = web1.DownloadString(currentHref);
+										Console.WriteLine("downloaded latest page");
+										htmlSnippet = new HtmlDocument();
+										htmlSnippet.LoadHtml(data2);
+										HtmlNode latestMain = htmlSnippet.GetElementbyId("main");
+										Console.WriteLine("main found");
+										string latestImage = latestMain.Descendants("img").Where(x => x.Attributes["src"] != null).First().Attributes["src"].Value;
+										Console.WriteLine("image found");
 											
-											//Send image to all subs
-											await SendMessageToSubscribers(latestImage);
+										//Send image to all subs
+										await SendMessageToSubscribers(latestImage);
 
-											//Check if there is translation text to send
-											HtmlNode textArea = latestMain.Descendants("div").Where(x => x.GetClasses().Contains("c-content")).FirstOrDefault();
-											foreach (HtmlNode n in textArea.Descendants("p"))
+										//Check if there is translation text to send
+										HtmlNode textArea = latestMain.Descendants("div").Where(x => x.GetClasses().Contains("c-content")).FirstOrDefault();
+										foreach (HtmlNode n in textArea.Descendants("p"))
+										{
+											if (n.ChildNodes[0] != null && n.ChildNodes[0].Name == "#text")
 											{
-												if (n.ChildNodes[0] != null && n.ChildNodes[0].Name == "#text")
-												{
-													await SendMessageToSubscribers(n.InnerHtml);
-												}
+												await SendMessageToSubscribers(n.InnerHtml);
 											}
-
 										}
 									}
 									else
@@ -234,6 +233,9 @@ namespace MagicEnjoyerBot.Controllers
 								}
 							}
 						}
+
+						CacheController.infoCache.SpoilUrlsXSeen[url] = latest;
+						CacheController.SaveList();
 					}
 					Console.WriteLine("Nothing new...");
 				}

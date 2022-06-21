@@ -44,7 +44,9 @@ namespace MagicEnjoyerBot.Commands
             [Summary("Returns spoiled cards up until listed one.")]
             public async Task ReturUntilSpoil(string url)
             {
-                await SpoilerController.GetUntil(url, Context);
+                //This currently will need to be upgraded to use 2 inputs (1 for the set and 1 for the card to spoil until)
+                await ReplyAsync("This command needs to be updated");
+                //await SpoilerController.GetUntil(url, Context);
             }
 
             [Command("interval")]
