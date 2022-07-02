@@ -68,6 +68,46 @@ namespace MagicEnjoyerBot.Commands
                 SpoilerController.AddSpoilerSetWithLatest(setURL, latestURL);
                 await ReplyAsync("Added/updated set");
             }
+
+            [Command("remove")]
+            [Summary("removes set from list of sets to monitor")]
+            [RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
+            [RequireOwner(Group = "Permission")]
+            public async Task RemoveSpoilSet([Summary("Set page url")] string setURL)
+            {
+                string response = SpoilerController.RemoveSpoilerSet(setURL);
+                await ReplyAsync(response);
+            }
+
+            [Command("enable")]
+            [Summary("Enables spoiler job to run and spoilers to send")]
+            [RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
+            [RequireOwner(Group = "Permission")]
+            public async Task SetSpoilEnabled()
+            {
+                SpoilerController.SetEnabled(true);
+                await ReplyAsync("Spoilers enabled");
+            }
+
+            [Command("disable")]
+            [Summary("Disables spoiler job and sending of spoilers")]
+            [RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
+            [RequireOwner(Group = "Permission")]
+            public async Task SetSpoilDisabled()
+            {
+                SpoilerController.SetEnabled(false);
+                await ReplyAsync("Spoilers disabled");
+            }
+
+            [Command("status")]
+            [Summary("Gets current status info of the spoil job")]
+            [RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
+            [RequireOwner(Group = "Permission")]
+            public async Task GetSpoilStatus()
+            {
+                string spoilStatus = SpoilerController.GetStatus();
+                await ReplyAsync(spoilStatus);
+            }
         }
     }
 }

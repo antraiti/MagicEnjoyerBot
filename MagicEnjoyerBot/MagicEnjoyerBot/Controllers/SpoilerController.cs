@@ -17,6 +17,8 @@ namespace MagicEnjoyerBot.Controllers
 		//These are used for controlling the job task (not ideal) we should eventually just switch to managing with a task factory and things
 		private static bool _cancelRun = false;
 		private static bool _clearToRun = true;
+
+		private static bool _spoilersActive = false;
 		
 		private static DiscordSocketClient _client;
 
@@ -24,6 +26,20 @@ namespace MagicEnjoyerBot.Controllers
         {
 			_client = client;
 		}
+
+		public static string GetStatus()
+        {
+			string status = "";
+
+			status += "Spoilers " + (_spoilersActive ? "Enabled " : "Disabled ");
+			status += "\nCurrently Spoiling: ";
+			foreach (KeyValuePair<string, List<string>> uxl in CacheController.infoCache.SpoilUrlsXSeen)
+			{
+				status += "\n- " + uxl.Key;
+			}
+
+			return status;
+        }
 
 		public static void StartSpoilJob()
         {
@@ -64,6 +80,18 @@ namespace MagicEnjoyerBot.Controllers
 			}
 			GetSpoilersUntil(setURL, latestURL);
 			CacheController.SaveList();
+		}
+
+		public static string RemoveSpoilerSet(string setURL)
+		{
+			string report = "";
+			if (CacheController.infoCache.SpoilUrlsXSeen.ContainsKey(setURL))
+			{
+				CacheController.infoCache.SpoilUrlsXSeen.Remove(setURL);
+				report += setURL + " removed";
+			}
+			CacheController.SaveList();
+			return report;
 		}
 
 		//this will have to be changed away from using hardcoded url
@@ -150,10 +178,15 @@ namespace MagicEnjoyerBot.Controllers
 			SpoilerJob(interval);
 		}
 
-        public static async Task SpoilerJob(TimeSpan interval)
+		public static void SetEnabled(bool enabled)
+		{
+			_spoilersActive = enabled;
+		}
+
+		public static async Task SpoilerJob(TimeSpan interval)
         {
 			_cancelRun = false;
-			while (!_cancelRun)
+			while (!_cancelRun && _spoilersActive)
 			{
 				Console.WriteLine("Checking for latest spoilers: " + DateTime.Now.ToString());
 				foreach(KeyValuePair<string, List<string>> uxl in CacheController.infoCache.SpoilUrlsXSeen)
@@ -172,7 +205,7 @@ namespace MagicEnjoyerBot.Controllers
 				Console.WriteLine("Checking for latest spoilers: " + DateTime.Now.ToString());
 				using (WebClient web1 = new WebClient())
 				{
-					Console.WriteLine("Current latest: " + latest);
+					Console.WriteLine("Current latest: " + latest.Last());
 					string data = web1.DownloadString(url);
 					Console.WriteLine("downloaded");
 					HtmlDocument htmlSnippet = new HtmlDocument();
@@ -189,6 +222,8 @@ namespace MagicEnjoyerBot.Controllers
 						//new stuff
 						Console.WriteLine(latest.Last());
 
+						int indexOffset = 1; //used to make sure order is preserved
+
 						//send images since latest
 						bool found = false;
 						foreach (HtmlNode node in latestBox.Descendants())
@@ -201,7 +236,8 @@ namespace MagicEnjoyerBot.Controllers
 									Console.WriteLine("node reading " + currentHref);
 									if (!latest.Contains(currentHref))
 									{
-										latest.Add(currentHref);
+										latest.Insert(latest.Count() - indexOffset, currentHref);
+										indexOffset++;
 										Console.WriteLine(currentHref);
 										string data2 = web1.DownloadString(currentHref);
 										Console.WriteLine("downloaded latest page");
