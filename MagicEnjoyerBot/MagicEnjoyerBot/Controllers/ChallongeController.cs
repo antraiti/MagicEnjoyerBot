@@ -13,7 +13,7 @@ namespace MagicEnjoyerBot.Controllers
 {
     public static class ChallongeController
     {
-        private static string _tournamentAPIKey = "DO_NOT_CHECK_IN_IF_THIS_IS_CHANGED"; //MAKE SURE YOU DONT CHECK IN THE API KEY
+        private static string _tournamentAPIKey = ""; //MAKE SURE YOU DONT CHECK IN THE API KEY
 
         public static CreateTournamentResponse CreateTournament(string tournamentName, string type, string swissrounds)
         {
@@ -280,6 +280,75 @@ namespace MagicEnjoyerBot.Controllers
 
 
             return responseObject;
+        }
+
+        public static JArray GetTournaments()
+        {
+            JArray responseObject = new JArray();
+            string httpContent = null;
+            using (HttpClient client = new HttpClient())
+            {
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri("https://api.challonge.com/v1/tournaments.json"
+                    + "?api_key=" + _tournamentAPIKey)
+                };
+
+                using (HttpResponseMessage res = client.SendAsync(request).Result)
+                {
+                    httpContent = res.Content.ReadAsStringAsync().Result;
+                }
+            }
+
+            try
+            {
+                responseObject = JArray.Parse(httpContent);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
+            return responseObject;
+        }
+
+        public static Dictionary<string, string> GetPlayerInfos()
+        {
+            Dictionary<string, string> playerInfos = new Dictionary<string, string>();
+            JArray responseObject = new JArray();
+
+            string httpContent = null;
+            using (HttpClient client = new HttpClient())
+            {
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(" https://api.challonge.com/v1/tournaments/"+TournamentController.GetCurrentTournamentID()+"/participants.json"
+                    + "?api_key=" + _tournamentAPIKey)
+                };
+
+                using (HttpResponseMessage res = client.SendAsync(request).Result)
+                {
+                    httpContent = res.Content.ReadAsStringAsync().Result;
+                }
+            }
+
+            try
+            {
+                responseObject = JArray.Parse(httpContent);
+                foreach(var respo in responseObject)
+                {
+                    playerInfos.Add((string)respo["participant"]["name"], (string)respo["participant"]["id"]);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return playerInfos;
         }
     }
 }

@@ -67,6 +67,20 @@ namespace MagicEnjoyerBot.Commands
 
 				await ReplyAsync(TournamentController.NextTournamentPhase());
 			}
+
+			[Command("tid")]
+			[RequireOwner(Group = "Permission")]
+			public async Task GetTournamentIDs()
+			{
+				await ReplyAsync(TournamentController.GetTournamentIDs());
+			}
+
+			[Command("recover")]
+			[RequireOwner(Group = "Permission")]
+			public async Task RecoverTournament(string tournamentID)
+			{
+				await ReplyAsync(TournamentController.RecoverTournament(tournamentID));
+			}
 		}
 	}
 }

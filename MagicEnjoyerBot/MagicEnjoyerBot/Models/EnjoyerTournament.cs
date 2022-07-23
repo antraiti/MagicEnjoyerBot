@@ -30,6 +30,8 @@ namespace MagicEnjoyerBot.Models
 
         public string NextPhase(); //used for multi phase tournaments
 
+        public string RecoverTournament(string id);
+
     }
 
     public enum TournamentStatus

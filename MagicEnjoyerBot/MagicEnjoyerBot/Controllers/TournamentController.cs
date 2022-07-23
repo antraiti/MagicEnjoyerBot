@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using MagicEnjoyerBot.Models;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,6 +139,29 @@ namespace MagicEnjoyerBot.Controllers
         public static string GetCurrentTournamentID()
         {
             return _currentTournament.GetID();
+        }
+
+        public static string GetTournamentIDs()
+        {
+            string response = "";
+
+            JArray tournaments = ChallongeController.GetTournaments();
+
+            foreach(var tournament in tournaments)
+            {
+                response += "URL: " + tournament["tournament"]["url"] + " -  ID: " + tournament["tournament"]["url"] + "\n";
+            }
+
+            return response;
+        }
+
+        public static string RecoverTournament(string id)
+        {
+            string response = "";
+
+            response = _currentTournament.RecoverTournament(id);
+
+            return response;
         }
     }
 }

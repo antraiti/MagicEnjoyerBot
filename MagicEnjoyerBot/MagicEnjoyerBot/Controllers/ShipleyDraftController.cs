@@ -123,7 +123,7 @@ namespace MagicEnjoyerBot.Controllers
 
             foreach(EnjoyerPlayer player in _players)
             {
-                response += "\n" + player.Name;
+                response += "\n" + player.Name + " " + player.Experience;
             }
 
             return response;
@@ -289,6 +289,25 @@ namespace MagicEnjoyerBot.Controllers
                 response.Add(p);
 
             return response;
+        }
+
+        public string RecoverTournament(string id)
+        {
+            string response  = string.Empty;
+            // fill tournament info
+            _tournamentID = id;
+
+            // fill player ids
+            Dictionary<string, string> fetchedPlayerInfos = ChallongeController.GetPlayerInfos();
+
+            foreach(EnjoyerPlayer player in _players)
+            {
+                player.ID = fetchedPlayerInfos[player.Name];
+            }
+
+            _draftStatus = ShipleyDraftStatus.swiss;
+
+            return response = "success";
         }
     }
 
