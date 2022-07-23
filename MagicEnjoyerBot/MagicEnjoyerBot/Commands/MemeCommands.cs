@@ -20,7 +20,6 @@ namespace MagicEnjoyerBot.Commands
 			{
 				string sussy = MemeController.GetRandomSussy();
 				if (sussy.Length > 0) await ReplyAsync(sussy);
-				//581565149987602433 933567783088824372
 			}
 		}
 	}

@@ -15,7 +15,7 @@ namespace MagicEnjoyerBot.Commands
 		{
 			[Command("echo")]
 			[Summary("returns what you say")]
-			public async Task SimpleEcho([Summary("what you say")] string receivedText)
+			public async Task SimpleEcho([Summary("what you say")][Remainder] string receivedText)
 			{
 				await ReplyAsync(receivedText);
 			}
